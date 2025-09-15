@@ -94,7 +94,10 @@ def get_document(document_id: str, db: Session = Depends(get_db)):
 
     # Get progress from Redis
     progress = redis_client.get(f"progress:{document_id}")
-    progress_value = float(progress) if progress else None
+    if doc.status == DocumentStatus.SUCCESS:
+        progress_value = 1.0
+    else:
+        progress_value = float(progress) if progress else None
 
     return {
         "document_uuid": doc.document_uuid,
@@ -102,7 +105,7 @@ def get_document(document_id: str, db: Session = Depends(get_db)):
         "name": doc.name,
         "URL": doc.url,
         "summary": doc.summary,
-        "progress": progress_value,  # This will be 0.5, 1.0, or None
+        "progress": progress_value,
     }
 
 
