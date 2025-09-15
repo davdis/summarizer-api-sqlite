@@ -17,7 +17,8 @@ import logging
 from app.config import REDIS_URL
 
 # Initialize Redis client
-redis_client = redis.Redis.from_url(REDIS_URL or "redis://localhost:6379")
+# redis_client = redis.Redis.from_url(REDIS_URL or "redis://localhost:6379")
+redis_client = redis.Redis(host="redis", port=6379)
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
 )

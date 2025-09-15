@@ -13,18 +13,17 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
-#  api:
-#    build:
-#      context: .
-#      dockerfile: app/docker/Dockerfile.api
-#    env_file: .env
-#    depends_on:
-#      - ollama
-#    ports:
-#      - "8000:8000"
-#    volumes:
-#      - appdata:/data
-#    command: ["/app/start-api.sh"]
+  api:
+    build:
+      context: .
+      dockerfile: app/docker/Dockerfile.api
+    depends_on:
+      - ollama
+    ports:
+      - "8000:8000"
+    volumes:
+      - appdata:/data
+    command: ["/app/start-api.sh"]
 volumes:
   appdata:
   ollama:
