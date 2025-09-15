@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy
+trafilatura
+requests
+tenacity
+python-dotenv
