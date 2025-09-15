@@ -6,3 +6,5 @@ trafilatura
 requests
 tenacity
 python-dotenv
+bs4
+newspaper3k
