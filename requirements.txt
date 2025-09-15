@@ -9,3 +9,4 @@ python-dotenv
 newspaper3k
 aiohttp
 redis
+types-requests

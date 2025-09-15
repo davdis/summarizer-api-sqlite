@@ -10,6 +10,7 @@ from app.summarizer import summarize_url
 import subprocess
 from fastapi import BackgroundTasks
 from dotenv import load_dotenv
+from typing import Generator
 import redis
 import logging
 
@@ -18,8 +19,7 @@ from app.config import REDIS_URL
 # Initialize Redis client
 redis_client = redis.Redis.from_url(REDIS_URL or "redis://localhost:6379")
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s"
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,12 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
+    """
+    Dependency to get DB session
+    :return: SessionLocal: DB session
+    :rtype: Session
+    """
     db = SessionLocal()
     try:
         yield db
@@ -35,7 +40,12 @@ def get_db():
         db.close()
 
 
-async def summarize_and_update(doc_id: str):
+async def summarize_and_update(doc_id: str) -> None:
+    """
+    Summarizes the document and updates the database
+    :param doc_id: Document ID
+    :return: None
+    """
     db = SessionLocal()
     try:
         doc = db.get(Document, doc_id)
@@ -61,7 +71,9 @@ async def summarize_and_update(doc_id: str):
         except Exception as e:
             doc.status = DocumentStatus.FAILED
             doc.error = str(e)
-            logger.error(f"Summarization failed for document: {doc_id} - {e}", exc_info=True)
+            logger.error(
+                f"Summarization failed for document: {doc_id} - {e}", exc_info=True
+            )
             redis_client.delete(f"progress:{doc_id}")
         doc.updated_at = datetime.utcnow()
         db.commit()
@@ -72,14 +84,23 @@ async def summarize_and_update(doc_id: str):
 @app.post("/documents/", status_code=202)
 def submit(
     payload: dict, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
-):
+) -> JSONResponse:
+    """
+    Submit a new document for summarization
+    :param payload: dict with "name" and "URL" keys
+    :param background_tasks: BackgroundTasks
+    :param db: DB session
+    :return: JSONResponse with document details
+    """
     name, url = payload["name"], payload["URL"]
     if (
         db.query(Document)
         .filter((Document.name == name) | (Document.url == url))
         .first()
     ):
-        logger.warning(f"Conflict: Document with name '{name}' or URL '{url}' already exists.")
+        logger.warning(
+            f"Conflict: Document with name '{name}' or URL '{url}' already exists."
+        )
         raise HTTPException(409, "Conflict")
     doc = Document(
         document_uuid=str(uuid4()),
@@ -90,18 +111,27 @@ def submit(
     db.add(doc)
     db.commit()
     logger.info(f"Submitted new document: {doc.document_uuid}")
-    background_tasks.add_task(summarize_and_update, doc.document_uuid)
-    return {
-        "document_uuid": doc.document_uuid,
-        "status": DocumentStatus.PENDING,
-        "name": doc.name,
-        "URL": doc.url,
-        "summary": None,
-    }
+    background_tasks.add_task(summarize_and_update, str(doc.document_uuid))
+    return JSONResponse(
+        content={
+            "document_uuid": doc.document_uuid,
+            "status": doc.status,
+            "name": doc.name,
+            "URL": doc.url,
+            "summary": doc.summary,
+            "progress": 0.0,
+        }
+    )
 
 
 @app.get("/documents/{document_id}")
-def get_document(document_id: str, db: Session = Depends(get_db)):
+def get_document(document_id: str, db: Session = Depends(get_db)) -> JSONResponse:
+    """
+    Get document status and summary
+    :param document_id: Document ID
+    :param db: DB session
+    :return: Document details
+    """
     doc = db.get(Document, document_id)
     if not doc:
         raise HTTPException(404, "Document not found")
@@ -113,14 +143,16 @@ def get_document(document_id: str, db: Session = Depends(get_db)):
     else:
         progress_value = float(progress) if progress else None
 
-    return {
-        "document_uuid": doc.document_uuid,
-        "status": doc.status,
-        "name": doc.name,
-        "URL": doc.url,
-        "summary": doc.summary,
-        "progress": progress_value,
-    }
+    return JSONResponse(
+        content={
+            "document_uuid": doc.document_uuid,
+            "status": doc.status,
+            "name": doc.name,
+            "URL": doc.url,
+            "summary": doc.summary,
+            "progress": progress_value,
+        }
+    )
 
 
 @app.get("/healthz")

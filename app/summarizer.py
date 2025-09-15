@@ -9,6 +9,12 @@ from app.config import OLLAMA_HOST
 
 
 async def summarize_url(url, progress_cb=None):
+    """
+    Summarize the article at the given URL using the Ollama API.
+    :param url: URL of the article to summarize
+    :param progress_cb: Optional callback to report progress (0.0 to 1.0)
+    :return: Summary text
+    """
     # These are still blocking, but newspaper doesn't have async versions
     # We'll run them in a thread pool
     loop = asyncio.get_event_loop()
