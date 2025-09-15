@@ -5,7 +5,7 @@ import requests
 from app.config import OLLAMA_MODEL
 from bs4 import BeautifulSoup
 from newspaper import Article
-
+from app.config import OLLAMA_HOST
 
 async def summarize_url(url, progress_cb=None):
     # These are still blocking, but newspaper doesn't have async versions
@@ -26,7 +26,7 @@ async def summarize_url(url, progress_cb=None):
 
     # Use aiohttp for async HTTP requests
     async with aiohttp.ClientSession() as session:
-        ollama_url = "http://localhost:11435/api/generate"
+        ollama_url = OLLAMA_HOST
         prompt = f"Summarize the following article:\n{article_text}"
         payload = {"model": OLLAMA_MODEL, "prompt": prompt}
 

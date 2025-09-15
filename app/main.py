@@ -9,7 +9,8 @@ from app.models import Document, DocumentStatus
 from app.summarizer import summarize_url
 import subprocess
 from fastapi import BackgroundTasks
-
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI()
 
