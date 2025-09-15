@@ -8,6 +8,8 @@ from app.db import SessionLocal
 from app.models import Document, DocumentStatus
 from app.summarizer import summarize_url
 import subprocess
+from fastapi import BackgroundTasks
+
 
 app = FastAPI()
 
@@ -19,9 +21,21 @@ def get_db():
     finally:
         db.close()
 
+async def summarize_and_update(doc_id: str, db: Session):
+    doc = db.get(Document, doc_id)
+    try:
+        summary = await summarize_url(doc.url, progress_cb=lambda p: None)
+        doc.summary = summary
+        doc.status = DocumentStatus.SUCCESS
+    except Exception as e:
+        doc.status = DocumentStatus.FAILED
+        doc.error = str(e)
+    doc.updated_at = datetime.utcnow()
+    db.commit()
+
 
 @app.post("/documents/", status_code=202)
-async def submit(payload: dict, db: Session = Depends(get_db)):
+def submit(payload: dict, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     name, url = payload["name"], payload["URL"]
     if (
         db.query(Document)
@@ -31,32 +45,19 @@ async def submit(payload: dict, db: Session = Depends(get_db)):
         raise HTTPException(409, "Conflict")
     doc = Document(
         document_uuid=str(uuid4()),
+        status=DocumentStatus.RUNNING,
         name=name,
         url=url,
-        status=DocumentStatus.RUNNING,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
     )
     db.add(doc)
     db.commit()
-   # Summarize after initial creation
-    try:
-        summary = await summarize_url(doc.url, progress_cb=lambda p: None)
-        doc.summary = summary
-        doc.status = DocumentStatus.SUCCESS
-        doc.updated_at = datetime.utcnow()
-        db.commit()
-    except Exception as e:
-        doc.status = DocumentStatus.FAILED
-        doc.error = str(e)
-        db.commit()
-
+    background_tasks.add_task(summarize_and_update, doc.document_uuid, db)
     return {
         "document_uuid": doc.document_uuid,
         "status": DocumentStatus.PENDING,
         "name": doc.name,
         "URL": doc.url,
-        "summary": "null",
+        "summary": None,
     }
 
 

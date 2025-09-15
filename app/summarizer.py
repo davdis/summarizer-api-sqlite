@@ -1,4 +1,6 @@
 import json
+import aiohttp
+import asyncio
 import requests
 from app.config import OLLAMA_MODEL
 from bs4 import BeautifulSoup
@@ -6,35 +8,43 @@ from newspaper import Article
 
 
 async def summarize_url(url, progress_cb=None):
-    article = Article(url)
-    article.download()
-    article.parse()
+    # These are still blocking, but newspaper doesn't have async versions
+    # We'll run them in a thread pool
+    loop = asyncio.get_event_loop()
 
-    title = article.title
-    content = article.text
+    # Run newspaper operations in thread pool to avoid blocking
+    def download_and_parse():
+        article = Article(url)
+        article.download()
+        article.parse()
+        return f"{article.title}\n\n{article.text}"
 
-    article_text = f"{title}\n\n{content}"
-
-    if progress_cb:
-        progress_cb(0.5)  # Halfway done
-
-    # Step 2: Send to Ollama for summarization
-    ollama_url = "http://localhost:11435/api/generate"
-    prompt = f"Summarize the following article:\n{article_text}"
-    payload = {"model": OLLAMA_MODEL, "prompt": prompt}  # Change to your model name
-    response = requests.post(
-        ollama_url,
-        json=payload,
-        stream=True,
-        timeout=30,
-    )
-    response_text = ""
-    for line in response.iter_lines():
-        if line:
-            data = json.loads(line.decode("utf-8"))
-            response_text += data.get("response", "")
+    article_text = await loop.run_in_executor(None, download_and_parse)
 
     if progress_cb:
-        progress_cb(1.0)  # Done
+        progress_cb(0.5)
+
+    # Use aiohttp for async HTTP requests
+    async with aiohttp.ClientSession() as session:
+        ollama_url = "http://localhost:11435/api/generate"
+        prompt = f"Summarize the following article:\n{article_text}"
+        payload = {"model": OLLAMA_MODEL, "prompt": prompt}
+
+        async with session.post(
+                ollama_url,
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=30)
+        ) as response:
+            response_text = ""
+            async for line in response.content:
+                if line:
+                    try:
+                        data = json.loads(line.decode("utf-8"))
+                        response_text += data.get("response", "")
+                    except json.JSONDecodeError:
+                        continue
+
+    if progress_cb:
+        progress_cb(1.0)
 
     return response_text
