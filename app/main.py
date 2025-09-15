@@ -141,8 +141,7 @@ def get_document(document_id: str, db: Session = Depends(get_db)) -> JSONRespons
     if doc.status == DocumentStatus.SUCCESS:
         progress_value = 1.0
     else:
-        progress_value = float(progress) if progress else None
-
+        progress_value = float(progress.decode()) if progress else 0.0
     return JSONResponse(
         content={
             "document_uuid": doc.document_uuid,
