@@ -74,7 +74,6 @@ def get(uuid: str, db: Session = Depends(get_db)):
         "URL": doc.url,
         "summary": doc.summary,
         "data_progress": doc.data_progress,
-        "error": doc.error,
     }
 
 
