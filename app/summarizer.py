@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from newspaper import Article
 from app.config import OLLAMA_HOST
 
+
 async def summarize_url(url, progress_cb=None):
     # These are still blocking, but newspaper doesn't have async versions
     # We'll run them in a thread pool
@@ -27,13 +28,13 @@ async def summarize_url(url, progress_cb=None):
     # Use aiohttp for async HTTP requests
     async with aiohttp.ClientSession() as session:
         ollama_url = OLLAMA_HOST
-        prompt = f"Summarize the following article:\n{article_text}"
+        prompt = (
+            f"Summarize the following article in less than 1500 chars:\n{article_text}"
+        )
         payload = {"model": OLLAMA_MODEL, "prompt": prompt}
 
         async with session.post(
-                ollama_url,
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=30)
+            ollama_url, json=payload, timeout=aiohttp.ClientTimeout(total=30)
         ) as response:
             response_text = ""
             async for line in response.content:

@@ -10,6 +10,7 @@ from app.summarizer import summarize_url
 import subprocess
 from fastapi import BackgroundTasks
 from dotenv import load_dotenv
+
 load_dotenv()
 
 app = FastAPI()
@@ -21,6 +22,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 async def summarize_and_update(doc_id: str, db: Session):
     doc = db.get(Document, doc_id)
@@ -36,7 +38,9 @@ async def summarize_and_update(doc_id: str, db: Session):
 
 
 @app.post("/documents/", status_code=202)
-def submit(payload: dict, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def submit(
+    payload: dict, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
     name, url = payload["name"], payload["URL"]
     if (
         db.query(Document)
