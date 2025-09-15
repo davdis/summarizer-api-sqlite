@@ -11,11 +11,18 @@ import subprocess
 from fastapi import BackgroundTasks
 from dotenv import load_dotenv
 import redis
-from app.config import REDIS_URL
+import logging
 
+from app.config import REDIS_URL
 
 # Initialize Redis client
 redis_client = redis.Redis.from_url(REDIS_URL or "redis://localhost:6379")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -33,7 +40,10 @@ async def summarize_and_update(doc_id: str):
     try:
         doc = db.get(Document, doc_id)
         if not doc:
+            logger.error(f"Document {doc_id} not found")
             return
+
+        logger.info(f"Starting summarization for document: {doc_id}")
 
         def update_progress(progress):
             # Store progress in Redis with expiration
@@ -45,11 +55,13 @@ async def summarize_and_update(doc_id: str):
             summary = await summarize_url(doc.url, progress_cb=update_progress)
             doc.summary = summary
             doc.status = DocumentStatus.SUCCESS
+            logger.info(f"Summarization succeeded for document: {doc_id}")
             # Clean up progress when done
             redis_client.delete(f"progress:{doc_id}")
         except Exception as e:
             doc.status = DocumentStatus.FAILED
             doc.error = str(e)
+            logger.error(f"Summarization failed for document: {doc_id} - {e}", exc_info=True)
             redis_client.delete(f"progress:{doc_id}")
         doc.updated_at = datetime.utcnow()
         db.commit()
@@ -67,6 +79,7 @@ def submit(
         .filter((Document.name == name) | (Document.url == url))
         .first()
     ):
+        logger.warning(f"Conflict: Document with name '{name}' or URL '{url}' already exists.")
         raise HTTPException(409, "Conflict")
     doc = Document(
         document_uuid=str(uuid4()),
@@ -76,6 +89,7 @@ def submit(
     )
     db.add(doc)
     db.commit()
+    logger.info(f"Submitted new document: {doc.document_uuid}")
     background_tasks.add_task(summarize_and_update, doc.document_uuid)
     return {
         "document_uuid": doc.document_uuid,
