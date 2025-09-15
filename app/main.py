@@ -10,8 +10,12 @@ from app.summarizer import summarize_url
 import subprocess
 from fastapi import BackgroundTasks
 from dotenv import load_dotenv
+import redis
+from app.config import REDIS_URL
 
-load_dotenv()
+
+# Initialize Redis client
+redis_client = redis.Redis.from_url(REDIS_URL or "redis://localhost:6379")
 
 app = FastAPI()
 
@@ -24,17 +28,33 @@ def get_db():
         db.close()
 
 
-async def summarize_and_update(doc_id: str, db: Session):
-    doc = db.get(Document, doc_id)
+async def summarize_and_update(doc_id: str):
+    db = SessionLocal()
     try:
-        summary = await summarize_url(doc.url, progress_cb=lambda p: None)
-        doc.summary = summary
-        doc.status = DocumentStatus.SUCCESS
-    except Exception as e:
-        doc.status = DocumentStatus.FAILED
-        doc.error = str(e)
-    doc.updated_at = datetime.utcnow()
-    db.commit()
+        doc = db.get(Document, doc_id)
+        if not doc:
+            return
+
+        def update_progress(progress):
+            # Store progress in Redis with expiration
+            redis_client.setex(
+                f"progress:{doc_id}", 3600, progress
+            )  # Expires in 1 hour
+
+        try:
+            summary = await summarize_url(doc.url, progress_cb=update_progress)
+            doc.summary = summary
+            doc.status = DocumentStatus.SUCCESS
+            # Clean up progress when done
+            redis_client.delete(f"progress:{doc_id}")
+        except Exception as e:
+            doc.status = DocumentStatus.FAILED
+            doc.error = str(e)
+            redis_client.delete(f"progress:{doc_id}")
+        doc.updated_at = datetime.utcnow()
+        db.commit()
+    finally:
+        db.close()
 
 
 @app.post("/documents/", status_code=202)
@@ -56,7 +76,7 @@ def submit(
     )
     db.add(doc)
     db.commit()
-    background_tasks.add_task(summarize_and_update, doc.document_uuid, db)
+    background_tasks.add_task(summarize_and_update, doc.document_uuid)
     return {
         "document_uuid": doc.document_uuid,
         "status": DocumentStatus.PENDING,
@@ -66,18 +86,23 @@ def submit(
     }
 
 
-@app.get("/documents/{uuid}")
-def get(uuid: str, db: Session = Depends(get_db)):
-    doc = db.get(Document, uuid)
+@app.get("/documents/{document_id}")
+def get_document(document_id: str, db: Session = Depends(get_db)):
+    doc = db.get(Document, document_id)
     if not doc:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Document not found")
+
+    # Get progress from Redis
+    progress = redis_client.get(f"progress:{document_id}")
+    progress_value = float(progress) if progress else None
+
     return {
         "document_uuid": doc.document_uuid,
         "status": doc.status,
         "name": doc.name,
         "URL": doc.url,
         "summary": doc.summary,
-        "data_progress": doc.data_progress,
+        "progress": progress_value,  # This will be 0.5, 1.0, or None
     }
 
 
