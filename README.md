@@ -64,11 +64,10 @@ Once summarization is complete, the summary is stored and can be retrieved via G
 - Ollama is used for flexible, local LLM inference.
 ### Usage
 1. Start the app:
-Run 
+Run to start all services.
 ```sh
 docker compose up --build
 ``` 
-to start all services.
 2. Submit a document:
 POST to /documents/ with a JSON payload containing the document URL.
 ```sh
