@@ -160,18 +160,3 @@ def health():
     return {"status": "ok"}
 
 
-# if __name__ == "__main__":
-#     subprocess.run(["python", "-m", "app.db_migrate"], check=True)
-#     subprocess.run(
-#         [
-#             "uvicorn",
-#             "app.main:app",
-#             "--host",
-#             "0.0.0.0",
-#             "--port",
-#             "8000",
-#             "--workers",
-#             "1",
-#         ],
-#         check=True,
-#     )

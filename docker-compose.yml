@@ -2,7 +2,7 @@ services:
   ollama:
     build:
       context: .
-      dockerfile: app/docker/Dockerfile.ollama
+      dockerfile: docker/Dockerfile.ollama
     ports:
       - "11435:11434"
     restart: unless-stopped
@@ -16,14 +16,14 @@ services:
   api:
     build:
       context: .
-      dockerfile: app/docker/Dockerfile.api
+      dockerfile: docker/Dockerfile.api
     depends_on:
       - ollama
     ports:
       - "8000:8000"
     volumes:
       - appdata:/data
-    #command: ["/app/start-api.sh"]
+
 volumes:
   appdata:
   ollama:
