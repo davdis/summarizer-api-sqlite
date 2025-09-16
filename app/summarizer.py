@@ -5,7 +5,72 @@ import requests
 from app.config import OLLAMA_MODEL
 from bs4 import BeautifulSoup
 from newspaper import Article
+from app.db import SessionLocal
 from app.config import OLLAMA_HOST
+from typing import Generator
+from sqlalchemy.orm import Session
+from app.models import Document, DocumentStatus
+import logging
+import redis
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+redis_client = redis.Redis(host="redis", port=6379)
+
+
+def get_db() -> Generator[Session, None, None]:
+    """
+    Dependency to get DB session
+    :return: SessionLocal: DB session
+    :rtype: Session
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+async def summarize_and_update(doc_id: str) -> None:
+    """
+    Summarizes the document and updates the database
+    :param doc_id: Document ID
+    :return: None
+    """
+    db = SessionLocal()
+    try:
+        doc = db.get(Document, doc_id)
+        if not doc:
+            logger.error(f"Document {doc_id} not found")
+            return
+
+        logger.info(f"Starting summarization for document: {doc_id}")
+
+        def update_progress(progress):
+            # Store progress in Redis with expiration
+            redis_client.setex(
+                f"progress:{doc_id}", 3600, progress
+            )  # Expires in 1 hour
+
+        try:
+            summary = await summarize_url(doc.url, progress_cb=update_progress)
+            doc.summary = summary
+            doc.status = DocumentStatus.SUCCESS
+            logger.info(f"Summarization succeeded for document: {doc_id}")
+            # Clean up progress when done
+            redis_client.delete(f"progress:{doc_id}")
+        except Exception as e:
+            doc.status = DocumentStatus.FAILED
+            doc.error = str(e)
+            logger.error(
+                f"Summarization failed for document: {doc_id} - {e}", exc_info=True
+            )
+            redis_client.delete(f"progress:{doc_id}")
+        doc.updated_at = datetime.utcnow()
+        db.commit()
+    finally:
+        db.close()
 
 
 async def summarize_url(url, progress_cb=None):
