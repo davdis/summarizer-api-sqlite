@@ -23,7 +23,7 @@ Exposes port 11434 inside the Docker network.
 - SQLite file (db.sqlite3) for document metadata and results.
 
 
-#### Data Flow
+## Data Flow
 
 #### 1. Document Submission:
 User sends a POST request to /documents/ with a document URL.
@@ -37,7 +37,7 @@ API reads progress from Redis.
 #### 4. Result Retrieval:
 Once summarization is complete, the summary is stored and can be retrieved via GET requests.
 
-### Configuration
+## Configuration
 #### Environment Variables:
 - REDIS_URL: Redis connection string (default: redis://localhost:6379, but should be redis://redis:6379 in Docker).
 - OLLAMA_HOST: Ollama endpoint (default: http://ollama:11434/api/generate).
