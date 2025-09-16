@@ -37,18 +37,35 @@ async def summarize_url(url, progress_cb=None):
         prompt = (
             f"Summarize the following article in less than 1500 chars:\n{article_text}"
         )
-        payload = {"model": OLLAMA_MODEL, "prompt": prompt}
+        payload = {
+            "model": OLLAMA_MODEL,
+            "prompt": prompt,
+            "stream": True,  # Explicitly enable streaming
+        }
 
         async with session.post(
-            ollama_url, json=payload, timeout=aiohttp.ClientTimeout(total=30)
+            ollama_url,
+            json=payload,
+            timeout=aiohttp.ClientTimeout(
+                total=300, sock_read=180
+            ),  # Different timeouts
         ) as response:
             response_text = ""
-            async for line in response.content:
-                if line:
+
+            # Handle streaming response properly
+            async for chunk in response.content.iter_chunked(1024):
+                if chunk:
                     try:
-                        data = json.loads(line.decode("utf-8"))
-                        response_text += data.get("response", "")
-                    except json.JSONDecodeError:
+                        # Each chunk might contain multiple JSON objects
+                        for line in chunk.decode("utf-8").split("\n"):
+                            if line.strip():
+                                data = json.loads(line)
+                                if "response" in data:
+                                    response_text += data["response"]
+                                # Check if done
+                                if data.get("done", False):
+                                    break
+                    except (json.JSONDecodeError, UnicodeDecodeError):
                         continue
 
     if progress_cb:
