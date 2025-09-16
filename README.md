@@ -85,3 +85,10 @@ When the application is running (default: port 8000), you can access the API spe
 - [http://localhost:8000/docs](http://localhost:8000/docs) — Swagger UI (interactive API docs)
 - [http://localhost:8000/redoc](http://localhost:8000/redoc) — ReDoc (alternative API docs)
 - [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json) — Raw OpenAPI 3.x JSON schema
+
+
+#### Concurrency and Performance
+FastAPI is built on top of Starlette and uses Python’s asyncio for asynchronous request handling. This allows the API to process multiple requests concurrently without blocking the main thread, making it efficient for I/O-bound operations like network calls to Ollama or Redis. Asynchronous endpoints (async def) enable the server to handle new requests while waiting for external services, improving throughput and responsiveness compared to traditional synchronous frameworks.
+- The API is built with FastAPI and can handle multiple concurrent requests efficiently.
+- However, the Ollama LLM model runs on GPU and may have slow response times, especially under heavy load or with large documents.
+- Summarization requests are processed asynchronously to avoid blocking the API, but overall throughput is limited by the speed of the Ollama model.
