@@ -92,11 +92,11 @@ When the application is running (default: port 8000), you can access the API spe
 - However, the Ollama LLM model runs on GPU and may have slow response times, especially under heavy load or with large documents.
 - Summarization requests are processed asynchronously to avoid blocking the API, but overall throughput is limited by the speed of the Ollama model.
 
-1. Asynchronous Background Processing:
+- Asynchronous Background Processing:
 Summarization is offloaded to background tasks (background_tasks.add_task(summarize_and_update, ...)), so the API can quickly respond to requests and remain responsive under high load.
-2. Non-blocking Progress Tracking:
+- Non-blocking Progress Tracking:
 Progress is tracked in Redis, a fast in-memory store, allowing clients to poll for status without overloading the database.
-3. Error Handling and Recovery:
+- Error Handling and Recovery:
 If summarization fails, the error is logged and stored in the document. The status is set to FAILED, and clients can see the error and retry by re-submitting the same (name, URL).
-4. Stateless API:
+- Stateless API:
 Each request is independent, and state is stored in the database and Redis, making it easy to scale horizontally (add more API workers).
