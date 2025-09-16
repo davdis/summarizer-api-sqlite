@@ -6,6 +6,10 @@ from app.db import Base
 
 
 class DocumentStatus(str, enum.Enum):
+    """
+    Enum for document processing status
+    """
+
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"

@@ -29,6 +29,17 @@ def submit(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
+    """
+    Submit a new document for summarization
+    :param payload: DocumentCreate
+    :param background_tasks: BackgroundTasks
+    :param db: DB session
+    :return: Document details
+    1. Check for exact match (name and url): re-summarize
+    2. Check for uniqueness (name or url): if conflict, return 409
+    3. Create new document and start summarization
+    4. Return document details with status 202
+    """
     name, url = payload.name, str(payload.url)
 
     # Check for exact match (re-summarization)
@@ -72,7 +83,7 @@ def submit(
     # Create new document
     doc = Document(
         document_uuid=str(uuid4()),
-        status=DocumentStatus.RUNNING,
+        status=DocumentStatus.PENDING,
         name=name,
         url=url,
     )
@@ -99,6 +110,10 @@ def get_document(document_id: UUID, db: Session = Depends(get_db)) -> JSONRespon
     :param document_id: Document ID
     :param db: DB session
     :return: Document details
+    1. Fetch document from DB
+    2. If not found, return 404
+    3. Get progress from Redis
+    4. Return document details with progress
     """
     doc = db.get(Document, str(document_id))
     if not doc:
