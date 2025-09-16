@@ -158,5 +158,3 @@ def get_document(document_id: str, db: Session = Depends(get_db)) -> JSONRespons
 @app.get("/healthz")
 def health():
     return {"status": "ok"}
-
-

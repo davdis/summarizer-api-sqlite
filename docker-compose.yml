@@ -21,9 +21,4 @@ services:
       - ollama
     ports:
       - "8000:8000"
-    volumes:
-      - appdata:/data
 
-volumes:
-  appdata:
-  ollama:
