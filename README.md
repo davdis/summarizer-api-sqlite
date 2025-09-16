@@ -8,11 +8,11 @@ This application is a document summarization API built with FastAPI. It leverage
 ### Components
 
 #### API Service (api):
-Built with FastAPI.
-Handles document submission, status tracking, and summary retrieval.
-Communicates with Redis for progress updates.
-Stores document metadata in SQLite.
-Calls Ollama for LLM-based summarization.
+- Built with FastAPI.
+    Handles document submission, status tracking, and summary retrieval.
+    Communicates with Redis for progress updates.
+    Stores document metadata in SQLite.
+    Calls Ollama for LLM-based summarization.
 #### Redis Service (redis):
 Used for fast, ephemeral progress tracking.
 Accessible from the API container via the Docker network.
