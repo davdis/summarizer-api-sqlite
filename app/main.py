@@ -1,12 +1,10 @@
-import json
 from uuid import uuid4
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.models import Document, DocumentStatus
 from app.summarizer import summarize_and_update, get_db
-import subprocess
 from fastapi import BackgroundTasks
 import redis
 import logging

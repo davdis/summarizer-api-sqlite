@@ -1,9 +1,7 @@
 import json
 import aiohttp
 import asyncio
-import requests
 from app.config import OLLAMA_MODEL
-from bs4 import BeautifulSoup
 from newspaper import Article
 from app.db import SessionLocal
 from app.config import OLLAMA_HOST
