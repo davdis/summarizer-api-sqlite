@@ -71,7 +71,7 @@ docker compose up --build
 2. Submit a document:
 POST to /documents/ with a JSON payload containing the document URL.
 ```sh
-curl -X POST "http://localhost:8000/documents/"      -H "Content-Type: application/json"      -d '{"name": "example_name", "URL": "example_url"}'
+curl -X POST "http://localhost:8000/documents/"      -H "Content-Type: application/json"      -d '{"name": "example_name", "url": "example_url"}'
 ```
 3. Check progress:
 GET /documents/{id} to retrieve status and summary.

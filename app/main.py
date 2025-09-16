@@ -10,6 +10,8 @@ import subprocess
 from fastapi import BackgroundTasks
 import redis
 import logging
+from app.schemas import DocumentCreate
+from uuid import UUID
 
 redis_client = redis.Redis(host="redis", port=6379)
 logging.basicConfig(
@@ -23,9 +25,11 @@ app = FastAPI()
 
 @app.post("/documents/", status_code=202)
 def submit(
-    payload: dict, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+    payload: DocumentCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ) -> JSONResponse:
-    name, url = payload["name"], payload["URL"]
+    name, url = payload.name, str(payload.url)
 
     # Check for exact match (re-summarization)
     doc = (
@@ -89,14 +93,14 @@ def submit(
 
 
 @app.get("/documents/{document_id}")
-def get_document(document_id: str, db: Session = Depends(get_db)) -> JSONResponse:
+def get_document(document_id: UUID, db: Session = Depends(get_db)) -> JSONResponse:
     """
     Get document status and summary
     :param document_id: Document ID
     :param db: DB session
     :return: Document details
     """
-    doc = db.get(Document, document_id)
+    doc = db.get(Document, str(document_id))
     if not doc:
         raise HTTPException(404, "Document not found")
 
