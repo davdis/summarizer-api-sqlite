@@ -20,7 +20,7 @@ This application is a document summarization API built with FastAPI. It leverage
 - Provides LLM endpoints for text generation.
 Exposes port 11434 inside the Docker network.
 #### Database:
-SQLite file (db.sqlite3) for document metadata and results.
+- SQLite file (db.sqlite3) for document metadata and results.
 
 
 #### Data Flow
