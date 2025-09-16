@@ -47,7 +47,7 @@ async def summarize_url(url, progress_cb=None):
             ollama_url,
             json=payload,
             timeout=aiohttp.ClientTimeout(
-                total=300, sock_read=180
+                total=1800, sock_read=1500
             ),  # Different timeouts
         ) as response:
             response_text = ""
