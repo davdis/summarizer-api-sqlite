@@ -78,3 +78,10 @@ GET /documents/{id} to retrieve status and summary.
 ```sh
 curl -X GET "http://localhost:8000/documents/example_uid"
 ```
+### API Documentation
+
+When the application is running (default: port 8000), you can access the API specification and interactive documentation at:
+
+- [http://localhost:8000/docs](http://localhost:8000/docs) — Swagger UI (interactive API docs)
+- [http://localhost:8000/redoc](http://localhost:8000/redoc) — ReDoc (alternative API docs)
+- [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json) — Raw OpenAPI 3.x JSON schema
