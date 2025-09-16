@@ -17,8 +17,8 @@ This application is a document summarization API built with FastAPI. It leverage
   - Used for fast, ephemeral progress tracking.
   Accessible from the API container via the Docker network.
 #### Ollama Service (ollama):
-    - Provides LLM endpoints for text generation.
-    Exposes port 11434 inside the Docker network.
+- Provides LLM endpoints for text generation.
+Exposes port 11434 inside the Docker network.
 #### Database:
 SQLite file (db.sqlite3) for document metadata and results.
 
