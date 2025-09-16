@@ -1,0 +1,34 @@
+[project]
+name = "summarizer-api-sqlite"
+version = "0.0.1"
+description = "Summarize articles website cotnent"
+readme = "README.md"
+requires-python = "==3.12.*"
+maintainers = [
+    {name = "Dimitrios Avdis", email = "dm.avdis@gmail.com"},
+    ]
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "sqlalchemy",
+    "trafilatura",
+    "requests",
+    "tenacity",
+    "python-dotenv",
+    "newspaper3k",
+    "aiohttp",
+    "redis",
+ ]
+
+[tool.pdm.version]
+source = "scm"
+
+[tool.pdm.build]
+package-dir = "app"
+
+[[tool.pdm.source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
