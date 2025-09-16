@@ -23,7 +23,7 @@ services:
       - "8000:8000"
     volumes:
       - appdata:/data
-    command: ["/app/start-api.sh"]
+    #command: ["/app/start-api.sh"]
 volumes:
   appdata:
   ollama:
