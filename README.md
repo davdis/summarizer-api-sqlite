@@ -89,7 +89,7 @@ When the application is running (default: port 8000), you can access the API spe
 
 #### Concurrency and Performance
 - FastAPI is built on top of Starlette and uses Python’s asyncio for asynchronous request handling. This allows the API to process multiple requests concurrently without blocking the main thread, making it efficient for I/O-bound operations like network calls to Ollama or Redis. Asynchronous endpoints (async def) enable the server to handle new requests while waiting for external services, improving throughput and responsiveness compared to traditional synchronous frameworks.
-- However, the Ollama LLM model runs on GPU and may have slow response times, especially under heavy load or with large documents.
+- However, the Ollama LLM model running on CPU has slow response times, especially under heavy load or with large documents.
 - Summarization requests are processed asynchronously to avoid blocking the API, but overall throughput is limited by the speed of the Ollama model.
 
 - Asynchronous Background Processing:
@@ -100,3 +100,16 @@ Progress is tracked in Redis, a fast in-memory store, allowing clients to poll f
 If summarization fails, the error is logged and stored in the document. The status is set to FAILED, and clients can see the error and retry by re-submitting the same (name, URL).
 - Stateless API:
 Each request is independent, and state is stored in the database and Redis, making it easy to scale horizontally (add more API workers).
+
+## Database Connection Pool Limitations
+
+This application uses SQLAlchemy with a connection pool to manage database connections. The default configuration (see `app/db.py`) is:
+
+- `pool_size=100`: Maximum number of persistent connections.
+- `max_overflow=200`: Additional connections allowed above the pool size.
+- `pool_timeout=120`: Seconds to wait for a connection before raising an error.
+
+**Important:**  
+Ensure your database server is configured to allow at least `pool_size + max_overflow` (300) concurrent connections. Exceeding this limit will result in connection timeouts and errors.
+
+You can adjust these values in `app/db.py` to fit your database server's capacity.
