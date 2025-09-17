@@ -1,15 +1,16 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from app.models import Document, DocumentStatus
-from app.summarizer import summarize_and_update, get_db
 from fastapi import BackgroundTasks
 import redis
 import logging
+
 from app.schemas import DocumentCreate
-from uuid import UUID
+from app.models import Document, DocumentStatus
+from app.summarizer import summarize_and_update, get_db
+
 
 redis_client = redis.Redis(host="redis", port=6379)
 logging.basicConfig(

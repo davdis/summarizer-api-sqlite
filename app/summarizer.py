@@ -1,16 +1,16 @@
 import json
 import aiohttp
 import asyncio
-from app.config import OLLAMA_MODEL
 from newspaper import Article
-from app.db import SessionLocal
-from app.config import OLLAMA_HOST
 from typing import Generator
 from sqlalchemy.orm import Session
-from app.models import Document, DocumentStatus
 import logging
 import redis
 from datetime import datetime
+
+from app.models import Document, DocumentStatus
+from app.db import SessionLocal
+from app.config import OLLAMA_HOST, OLLAMA_MODEL
 
 logger = logging.getLogger(__name__)
 
