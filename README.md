@@ -109,7 +109,3 @@ This application uses SQLAlchemy with a connection pool to manage database conne
 - `max_overflow=200`: Additional connections allowed above the pool size.
 - `pool_timeout=120`: Seconds to wait for a connection before raising an error.
 
-**Important:**  
-Ensure your database server is configured to allow at least `pool_size + max_overflow` (300) concurrent connections. Exceeding this limit will result in connection timeouts and errors.
-
-You can adjust these values in `app/db.py` to fit your database server's capacity.
