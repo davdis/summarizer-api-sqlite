@@ -1,7 +1,7 @@
 [project]
 name = "summarizer-api-sqlite"
 version = "0.0.1"
-description = "Summarize articles website cotnent"
+description = "Summarize articles website content"
 readme = "README.md"
 requires-python = "==3.12.*"
 maintainers = [
