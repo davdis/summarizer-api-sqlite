@@ -71,7 +71,7 @@ async def summarize_and_update(doc_id: str) -> None:
         db.close()
 
 
-async def summarize_url(url, progress_cb=None) -> str:
+async def summarize_url(url: str, progress_cb=None) -> str:
     """
     Summarize the article at the given URL using the Ollama API.
     :param url: URL of the article to summarize
